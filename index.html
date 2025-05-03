@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Assistant</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #10a37f;
+            --primary-hover: #0d8c6d;
+            --primary-light: rgba(16, 163, 127, 0.1);
+            --secondary-color: #f7f7f8;
+            --text-color: #343541;
+            --light-text: #6e6e80;
+            --border-color: #e5e5e5;
+            --ai-bg: #f7f7f8;
+            --user-bg: #ffffff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --card-radius: 12px;
+            --button-radius: 8px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            
+            /* Dark mode variables */
+            --dark-bg: #121212;
+            --dark-card: #1e1e1e;
+            --dark-border: #2a2a2a;
+            --dark-text: #e2e2e2;
+            --dark-light-text: #a1a1b5;
+            
+            /* Shiny black and grey theme */
+            --shiny-black: #121212;
+            --shiny-dark-grey: #1e1e1e;
+            --shiny-grey: #2a2a2a;
+            --shiny-light-grey: #3a3a3a;
+            --shiny-accent: #444;
+            --shiny-highlight: rgba(255, 255, 255, 0.05);
+            --shiny-text: #e2e2e2;
+            --shiny-secondary-text: #aaa;
+            --sidebar-width: 250px;
+            
+            /* Additional theme variables */
+            --primary-color-hover: #0d8c6e;
+            --secondary-color-alt: #f0f0f0;
+            --text-color-alt: #333;
+            --text-color-light: #666;
+            --background-color: #fff;
+            --card-background: #fff;
+            --border-color-alt: #e0e0e0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --shadow-color-dark: rgba(0, 0, 0, 0.2);
+            --ai-message-background: #f7f7f8;
+            --user-message-background: #fff;
+            --input-background: #fff;
+            --sidebar-background: #f9f9f9;
+            --sidebar-border: #e0e0e0;
+            --nav-link-hover: #f0f0f0;
+            --nav-link-active: #e6f7f2;
+            --nav-link-active-border: #10a37f;
+            --shiny-accent-hover: #0d8c6e;
+            --shiny-text-light: #a0a0a0;
+            --shiny-border: #333;
+            --shiny-card: #252525;
+            --shiny-highlight-alt: rgba(16, 163, 127, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            line-height: 1.6;
+            font-size: 16px;
+            transition: var(--transition);
+            overflow: hidden;
+        }
+        
+        body.dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+        
+        /* Loading Animation */
+        .loading-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .loading-animation.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Floating Action Button */
+        .floating-action-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 100;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: appear 0.5s ease-out;
+        }
+        
+        .floating-action-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        .floating-action-button svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: scale(0.5) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        /* Enhanced Card Designs */
+        .message, .pricing-card, .example-prompt {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .message::before, .pricing-card::before, .example-prompt::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.05) 50%, 
+                rgba(255, 255, 255, 0) 100%);
+            transition: all 0.6s ease;
+            transform: rotate(45deg);
+            opacity: 0;
+        }
+        
+        .message:hover::before, .pricing-card:hover::before, .example-prompt:hover::before {
+            top: -50%;
+            left: -50%;
+            opacity: 1;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-background);
+            border-right: 1px solid var(--sidebar-border);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 200;
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        body.dark-mode .sidebar {
+            background-color: var(--shiny-black);
+            border-right-color: var(--shiny-grey);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        body.dark-mode .sidebar-header {
+            border-bottom-color: var(--shiny-grey);
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--primary-color);
+        }
+        
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--light-text);
+            display: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+        
+        .nav-link {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+        
+        body.dark-mode .nav-link {
+            color: var(--shiny-text);
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: var(--secondary-color);
+            border-left-color: var(--primary-color);
+        }
+        
+        body.dark-mode .nav-link:hover, body.dark-mode .nav-link.active {
+            background-color: var(--shiny-highlight);
+            border-left-color: var(--primary-color);
+        }
+        
+        .nav-link svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+        }
+        
+        body.dark-mode header {
+            background-color: var(--dark-bg);
+            border-bottom-color: var(--dark-border);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background-color: var(--primary-color);
+            border-radius: var(--button-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(16, 163, 127, 0.3);
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--light-text);
+            transition: var(--transition);
+        }
+        
+        .theme-toggle:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        body.dark-mode .theme-toggle:hover {
+            background-color: var(--dark-card);
+        }
+
+        /* Page container styles */
+        .page {
+            display: none;
+            width: 100%;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding-bottom: 12px;
+        }
+
+        .message {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            border-radius: var(--card-radius);
+            max-width: 100%;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transition: var(--transition);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ai-message {
+            background-color: var(--ai-bg);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .user-message {
+            background-color: var(--user-bg);
+            border: 1px solid var(--border-color);
+            border-right: 4px solid #5436da;
+        }
+        
+        body.dark-mode .ai-message {
+            background-color: var(--dark-card);
+            border-color: var(--primary-color);
+        }
+        
+        body.dark-mode .user-message {
+            background-color: var(--dark-card);
+            border-color: #5436da;
+        }
+
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--button-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+        }
+
+        .ai-avatar {
+            background-color: var(--primary-color);
+            color: white;
+            background-image: linear-gradient(135deg, var(--primary-color), #0d8c6d);
+        }
+
+        .user-avatar {
+            background-color: #5436da;
+            color: white;
+            background-image: linear-gradient(135deg, #5436da, #7b5dff);
+        }
+
+        .message-content {
+            flex: 1;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+        
+        body.dark-mode .message-content {
+            color: var(--dark-text);
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            color: var(--light-text);
+            font-size: 14px;
+        }
+        
+        body.dark-mode .typing-indicator {
+            color: var(--dark-light-text);
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: inline-block;
+            animation: typing 1.4s infinite both;
+            opacity: 0.6;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.4; transform: scale(1); }
+        }
+
+        .input-container {
+            position: relative;
+            margin-top: auto;
+            transition: var(--transition);
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 18px 60px 18px 22px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            font-size: 15px;
+            resize: none;
+            outline: none;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            min-height: 64px;
+            max-height: 200px;
+            background-color: #ffffff;
+            color: var(--text-color);
+        }
+        
+        body.dark-mode .message-input {
+            background-color: var(--dark-card);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        .message-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+
+        .send-button {
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--button-radius);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 2px 10px rgba(16, 163, 127, 0.2);
+        }
+
+        .send-button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 163, 127, 0.3);
+        }
+
+        .send-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .welcome-container {
+            text-align: center;
+            margin: 40px auto 60px;
+            max-width: 700px;
+            animation: fadeUp 0.8s ease-out;
+        }
+        
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        body.dark-mode .welcome-title {
+            color: var(--primary-color);
+        }
+
+        .welcome-subtitle {
+            font-size: 18px;
+            color: var(--light-text);
+            margin-bottom: 40px;
+            line-height: 1.6;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        body.dark-mode .welcome-subtitle {
+            color: var(--dark-light-text);
+        }
+
+        .example-prompts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        .example-prompt {
+            padding: 18px 20px;
+            background-color: var(--secondary-color);
+            border-radius: var(--card-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: left;
+            border: 1px solid transparent;
+            box-shadow: var(--shadow);
+        }
+        
+        body.dark-mode .example-prompt {
+            background-color: var(--dark-card);
+            border-color: var(--dark-border);
+        }
+
+        .example-prompt:hover {
+            background-color: #e9e9eb;
+            transform: translateY(-3px);
+            border-color: var(--primary-color);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.dark-mode .example-prompt:hover {
+            background-color: var(--dark-card);
+            border-color: var(--primary-color);
+        }
+
+        /* Pricing Page Styles */
+        .pricing-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .pricing-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--primary-color), #4ade80);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .pricing-subtitle {
+            text-align: center;
+            color: var(--text-color-light);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+        
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .pricing-card {
+            background-color: var(--card-background);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            border: 1px solid var(--border-color);
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px var(--shadow-color-dark);
+        }
+        
+        .pricing-card.popular {
+            transform: scale(1.05);
+            z-index: 1;
+            border-color: var(--primary-color);
+        }
+        
+        .pricing-card.popular:hover {
+            transform: scale(1.05) translateY(-5px);
+        }
+        
+        .popular-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--primary-color), #4ade80);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-bottom-left-radius: 8px;
+        }
+        
+        .pricing-card-header {
+            padding: 2rem;
+            background-color: var(--card-background);
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .pricing-card-header h2 {
+            margin: 0 0 1rem 0;
+            font-size: 1.5rem;
+        }
+        
+        .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .price span {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--text-color-light);
+        }
+        
+        .pricing-card-body {
+            padding: 2rem;
+        }
+        
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 2rem 0;
+        }
+        
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+        
+        .pricing-features li svg {
+            color: var(--primary-color);
+            flex-shrink: 0;
+        }
+        
+        .pricing-features li.disabled {
+            color: var(--text-color-light);
+        }
+        
+        .pricing-features li.disabled svg {
+            color: var(--text-color-light);
+        }
+        
+        .pricing-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            background-color: transparent;
+            color: var(--text-color);
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .pricing-btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .pricing-btn.highlight {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pricing-btn.highlight:hover {
+            background-color: var(--primary-color-hover);
+        }
+        
+        /* Settings Page Styles */
+        .settings-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .settings-title {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .settings-subtitle {
+            color: var(--text-color-light);
+            margin-bottom: 2rem;
+        }
+        
+        .settings-section {
+            background-color: var(--card-background);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        /* Animation and Transition Styles */
+        .theme-transition {
+            transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+        
+        .page-exit {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .page-enter {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: pageEnter 0.5s forwards 0.1s;
+        }
+        
+        @keyframes pageEnter {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .title-change {
+            animation: titlePulse 0.3s ease;
+        }
+        
+        @keyframes titlePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .ripple-effect {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+        
+        @keyframes ripple {
+            to { transform: scale(2); opacity: 0; }
+        }
+        
+        .welcome-title {
+            visibility: hidden;
+        }
+        
+        .welcome-subtitle {
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        .pricing-card, .settings-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .pricing-card.revealed, .settings-section.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 199;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Button and Link Hover Effects */
+        .nav-link, .pricing-btn, .example-prompt, .send-button, .theme-toggle {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-link:hover, .pricing-btn:hover, .example-prompt:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Floating Action Button */
+        .floating-action-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), #0d8c6d);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform: scale(0);
+            animation: floatingButtonAppear 0.5s forwards 1s;
+        }
+        
+        .floating-action-button:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        @keyframes floatingButtonAppear {
+            to { transform: scale(1); }
+        }
+        
+        /* Enhanced Card Designs */
+        .message, .pricing-card, .example-prompt {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .message::before, .pricing-card::before, .example-prompt::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .message:hover::before, .pricing-card:hover::before, .example-prompt:hover::before {
+            opacity: 1;
+        }
+        
+        /* Loading Animation */
+        .loading-animation {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .loading-animation.active {
+            display: flex;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .content-wrapper {
+                margin-left: 0;
+            }
+            
+            .chat-container {
+                margin-bottom: 80px;
+            }
+            
+            .input-container {
+                padding: 0.75rem;
+            }
+            
+            .welcome-container {
+                padding: 1.5rem;
+            }
+            
+            .example-prompts {
+                grid-template-columns: 1fr;
+            }
+            
+            .pricing-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .pricing-card.popular {
+                transform: scale(1);
+            }
+            
+            .pricing-card.popular:hover {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="loading-animation" id="loadingAnimation">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- Floating Action Button -->
+    <div class="floating-action-button" id="floatingActionButton">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14"></path>
+            <path d="M5 12h14"></path>
+        </svg>
+    </div>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="logo-icon">AI</div>
+                AI Assistant
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="nav-links">
+            <a href="#chat" class="nav-link active" data-page="chat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Chat
+            </a>
+            <a href="#pricing" class="nav-link" data-page="pricing">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                    <line x1="7" y1="2" x2="7" y2="22"></line>
+                    <line x1="17" y1="2" x2="17" y2="22"></line>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <line x1="2" y1="7" x2="7" y2="7"></line>
+                    <line x1="2" y1="17" x2="7" y2="17"></line>
+                    <line x1="17" y1="17" x2="22" y2="17"></line>
+                    <line x1="17" y1="7" x2="22" y2="7"></line>
+                </svg>
+                Pricing
+            </a>
+            <a href="#settings" class="nav-link" data-page="settings">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                Settings
+            </a>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <header>
+            <div class="page-title" id="pageTitle">Chat</div>
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" id="moonIcon"></path>
+                    <circle cx="12" cy="12" r="5" id="sunIcon" style="display:none"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3" id="sunIcon2" style="display:none"></line>
+                    <line x1="12" y1="21" x2="12" y2="23" id="sunIcon3" style="display:none"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" id="sunIcon4" style="display:none"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" id="sunIcon5" style="display:none"></line>
+                    <line x1="1" y1="12" x2="3" y2="12" id="sunIcon6" style="display:none"></line>
+                    <line x1="21" y1="12" x2="23" y2="12" id="sunIcon7" style="display:none"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" id="sunIcon8" style="display:none"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" id="sunIcon9" style="display:none"></line>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Chat Page -->
+        <div class="page active" id="chatPage">
+            <main>
+                <div class="chat-container" id="chatContainer">
+                    <div class="welcome-container" id="welcomeContainer">
+                        <h1 class="welcome-title">AI Chat Assistant</h1>
+                        <p class="welcome-subtitle">Ask me anything about general knowledge, coding, writing, or any other topic you're curious about.</p>
+                        
+                        <div class="example-prompts">
+                            <div class="example-prompt" onclick="setPrompt('Explain how machine learning works in simple terms.')">
+                                Explain how machine learning works in simple terms.
+                            </div>
+                            <div class="example-prompt" onclick="setPrompt('Write a short poem about technology.')">
+                                Write a short poem about technology.
+                            </div>
+                            <div class="example-prompt" onclick="setPrompt('What are some tips for learning programming?')">
+                                What are some tips for learning programming?
+                            </div>
+                            <div class="example-prompt" onclick="setPrompt('How can I improve my productivity?')">
+                                How can I improve my productivity?
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-container">
+                    <textarea 
+                        id="messageInput" 
+                        class="message-input" 
+                        placeholder="Type your message here..." 
+                        rows="1"
+                        onkeydown="handleKeyDown(event)"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                    <button id="sendButton" class="send-button" onclick="sendMessage()" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </main>
+        </div>
+
+        <!-- Pricing Page -->
+        <div class="page" id="pricingPage">
+            <main>
+                <div class="pricing-container">
+                    <h1 class="pricing-title">Choose Your Plan</h1>
+                    <p class="pricing-subtitle">Select the perfect plan for your needs with our flexible pricing options.</p>
+                    
+                    <div class="pricing-cards">
+                        <div class="pricing-card">
+                            <div class="pricing-card-header">
+                                <h2>Free</h2>
+                                <div class="price">$0<span>/month</span></div>
+                            </div>
+                            <div class="pricing-card-body">
+                                <ul class="pricing-features">
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Up to 20 messages per day
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Basic AI capabilities
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Standard response time
+                                    </li>
+                                    <li class="disabled">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                        No file uploads
+                                    </li>
+                                    <li class="disabled">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                        No priority support
+                                    </li>
+                                </ul>
+                                <button class="pricing-btn">Current Plan</button>
+                            </div>
+                        </div>
+                        
+                        <div class="pricing-card popular">
+                            <div class="popular-badge">Most Popular</div>
+                            <div class="pricing-card-header">
+                                <h2>Pro</h2>
+                                <div class="price">$9.99<span>/month</span></div>
+                            </div>
+                            <div class="pricing-card-body">
+                                <ul class="pricing-features">
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Unlimited messages
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Advanced AI capabilities
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Faster response time
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        File uploads up to 25MB
+                                    </li>
+                                    <li class="disabled">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                        No priority support
+                                    </li>
+                                </ul>
+                                <button class="pricing-btn highlight">Upgrade Now</button>
+                            </div>
+                        </div>
+                        
+                        <div class="pricing-card">
+                            <div class="pricing-card-header">
+                                <h2>Enterprise</h2>
+                                <div class="price">$29.99<span>/month</span></div>
+                            </div>
+                            <div class="pricing-card-body">
+                                <ul class="pricing-features">
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Unlimited messages
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Premium AI capabilities
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Instant response time
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        File uploads up to 100MB
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        24/7 priority support
+                                    </li>
+                                </ul>
+                                <button class="pricing-btn">Contact Sales</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Settings Page (placeholder) -->
+        <div class="page" id="settingsPage">
+            <main>
+                <div class="settings-container">
+                    <h1 class="settings-title">Settings</h1>
+                    <p class="settings-subtitle">Customize your AI Chat Assistant experience.</p>
+                    
+                    <div class="settings-section">
+                        <h2>Coming Soon</h2>
+                        <p>Settings page is under development.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Initialize theme based on user preference or system setting
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                document.body.classList.toggle('dark-mode', savedTheme === 'dark');
+                updateThemeToggleIcons(savedTheme);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.body.classList.add('dark-mode');
+                updateThemeToggleIcons('dark');
+            }
+        }
+
+        // Update theme toggle button icons based on current theme
+        function updateThemeToggleIcons(theme) {
+            const moonIcon = document.getElementById('moonIcon');
+            const sunIcons = document.querySelectorAll('[id^="sunIcon"]');
+            
+            if (theme === 'dark') {
+                moonIcon.style.display = 'none';
+                sunIcons.forEach(icon => icon.style.display = 'block');
+            } else {
+                moonIcon.style.display = 'block';
+                sunIcons.forEach(icon => icon.style.display = 'none');
+            }
+        }
+
+        // Toggle between light and dark themes with animation
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            // Add transition class for smooth color changes
+            document.body.classList.add('theme-transition');
+            
+            // Toggle dark mode class on body
+            document.body.classList.toggle('dark-mode');
+            
+            // Update theme attribute and localStorage
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeToggleIcons(newTheme);
+            
+            // Remove transition class after animation completes
+            setTimeout(() => {
+                document.body.classList.remove('theme-transition');
+            }, 500);
+        });
+        
+        // Page navigation with smooth transitions
+        function navigateToPage(pageId) {
+            // Show loading animation
+            showLoading();
+            
+            // Get current active page
+            const currentPage = document.querySelector('.page.active');
+            const targetPage = document.getElementById(pageId + 'Page');
+            
+            if (currentPage === targetPage) {
+                hideLoading();
+                return;
+            }
+            
+            // Add exit animation to current page
+            if (currentPage) {
+                currentPage.classList.add('page-exit');
+                
+                setTimeout(() => {
+                    // Hide all pages
+                    document.querySelectorAll('.page').forEach(page => {
+                        page.classList.remove('active', 'page-exit', 'page-enter');
+                    });
+                    
+                    // Show and animate target page
+                    targetPage.classList.add('active', 'page-enter');
+                    
+                    // Update page title with animation
+                    const pageTitle = document.getElementById('pageTitle');
+                    pageTitle.classList.add('title-change');
+                    pageTitle.textContent = pageId.charAt(0).toUpperCase() + pageId.slice(1);
+                    
+                    setTimeout(() => {
+                        pageTitle.classList.remove('title-change');
+                    }, 300);
+                    
+                    // Update active nav link with animation
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    
+                    const activeLink = document.querySelector(`.nav-link[data-page="${pageId}"]`);
+                    activeLink.classList.add('active');
+                    
+                    // Add ripple effect to active link
+                    createRipple(activeLink);
+                    
+                    // Hide loading animation
+                    hideLoading();
+                }, 300); // Match with CSS transition duration
+            }
+        }
+        
+        // Ripple effect for buttons and links
+        function createRipple(element) {
+            const ripple = document.createElement('span');
+            ripple.classList.add('ripple-effect');
+            
+            const rect = element.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            
+            ripple.style.width = ripple.style.height = `${size}px`;
+            ripple.style.left = `${0}px`;
+            ripple.style.top = `${0}px`;
+            
+            element.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        }
+        
+        // Add ripple effect to all buttons and nav links
+        document.querySelectorAll('button, .nav-link, .example-prompt, .pricing-btn').forEach(element => {
+            element.addEventListener('click', function(e) {
+                createRipple(this);
+            });
+        });
+        
+        // Add event listeners to navigation links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageId = this.getAttribute('data-page');
+                navigateToPage(pageId);
+                history.pushState(null, null, this.getAttribute('href'));
+            });
+        });
+        
+        // Handle browser back/forward navigation
+        window.addEventListener('popstate', function() {
+            const hash = window.location.hash.substring(1) || 'chat';
+            navigateToPage(hash);
+        });
+        
+        // Toggle sidebar on mobile with animation
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('open');
+            
+            // Add overlay when sidebar is open on mobile
+            if (window.innerWidth <= 768) {
+                if (sidebar.classList.contains('open')) {
+                    const overlay = document.createElement('div');
+                    overlay.classList.add('sidebar-overlay');
+                    overlay.addEventListener('click', () => {
+                        sidebar.classList.remove('open');
+                        overlay.remove();
+                    });
+                    document.body.appendChild(overlay);
+                    
+                    // Fade in overlay
+                    setTimeout(() => {
+                        overlay.style.opacity = '1';
+                    }, 10);
+                } else {
+                    const overlay = document.querySelector('.sidebar-overlay');
+                    if (overlay) {
+                        overlay.style.opacity = '0';
+                        setTimeout(() => {
+                            overlay.remove();
+                        }, 300);
+                    }
+                }
+            }
+        });
+        
+        // Initialize page based on URL hash
+        function initPage() {
+            const hash = window.location.hash.substring(1) || 'chat';
+            
+            // Show initial page without animation
+            document.getElementById(hash + 'Page').classList.add('active');
+            document.getElementById('pageTitle').textContent = hash.charAt(0).toUpperCase() + hash.slice(1);
+            document.querySelector(`.nav-link[data-page="${hash}"]`).classList.add('active');
+        }
+
+        // Show loading animation
+        function showLoading() {
+            const loadingAnimation = document.getElementById('loadingAnimation');
+            loadingAnimation.classList.add('active');
+        }
+        
+        // Hide loading animation
+        function hideLoading() {
+            const loadingAnimation = document.getElementById('loadingAnimation');
+            loadingAnimation.classList.remove('active');
+        }
+        
+        // Floating Action Button functionality
+        document.getElementById('floatingActionButton').addEventListener('click', function() {
+            // Show a quick loading animation
+            showLoading();
+            
+            setTimeout(() => {
+                // Create a new message element
+                const chatContainer = document.getElementById('chatContainer');
+                const welcomeContainer = document.getElementById('welcomeContainer');
+                
+                // Hide welcome container if visible
+                if (welcomeContainer && window.getComputedStyle(welcomeContainer).display !== 'none') {
+                    welcomeContainer.style.display = 'none';
+                }
+                
+                // Focus on message input
+                const messageInput = document.getElementById('messageInput');
+                if (messageInput) {
+                    messageInput.focus();
+                }
+                
+                // Navigate to chat page if not already there
+                const currentPage = document.querySelector('.page.active');
+                if (currentPage && currentPage.id !== 'chatPage') {
+                    navigateToPage('chat');
+                    history.pushState(null, null, '#chat');
+                }
+                
+                hideLoading();
+            }, 500);
+        });
+        
+        // Initialize theme and page on load
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            initPage();
+            
+            // Initialize other elements
+            const chatContainer = document.getElementById('chatContainer');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            const welcomeContainer = document.getElementById('welcomeContainer');
+            
+            // Simulate initial loading
+            showLoading();
+            setTimeout(hideLoading, 1000);
+        });
+
+        // Enable/disable send button based on input
+        messageInput.addEventListener('input', function() {
+            sendButton.disabled = messageInput.value.trim() === '';
+        });
+
+        // Auto-resize textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
+        }
+
+        // Handle Enter key press
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Set prompt from example
+        function setPrompt(text) {
+            messageInput.value = text;
+            messageInput.focus();
+            autoResize(messageInput);
+            sendButton.disabled = false;
+        }
+
+        // Add message to chat
+        function addMessage(content, isUser = false) {
+            // Hide welcome container after first message
+            welcomeContainer.style.display = 'none';
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = `avatar ${isUser ? 'user-avatar' : 'ai-avatar'}`;
+            avatar.textContent = isUser ? 'U' : 'AI';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.textContent = content;
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            return messageDiv;
+        }
+
+        // Add typing indicator
+        function addTypingIndicator() {
+            const messageDiv = addMessage('', false);
+            
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.innerHTML = 'AI is thinking<span></span><span></span><span></span>';
+            typingIndicator.style.display = 'flex';
+            
+            messageDiv.querySelector('.message-content').appendChild(typingIndicator);
+            
+            return messageDiv;
+        }
+
+        // Send message to backend
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessage(message, true);
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendButton.disabled = true;
+            
+            // Add typing indicator
+            const typingMessageDiv = addTypingIndicator();
+            
+            try {
+                // Show loading animation
+                showLoading();
+                
+                // Send message to backend
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+                
+                const data = await response.json();
+                
+                // Remove typing indicator and add AI response
+                chatContainer.removeChild(typingMessageDiv);
+                addMessage(data.response, false);
+                
+                // Hide loading animation
+                hideLoading();
+                
+            } catch (error) {
+                // Remove typing indicator and show error
+                chatContainer.removeChild(typingMessageDiv);
+                addMessage('Sorry, I encountered an error. Please try again.', false);
+                console.error('Error:', error);
+                
+                // Hide loading animation
+                hideLoading();
+            }
+        }
+    </script>
+</body>
+</html>
