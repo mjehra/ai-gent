@@ -1,4 +1,4 @@
-# AI Chat Assistant (ChatGPT Clone)
+# AI Chat Assistant (ChatGPT, PERPLEXITY,TYPEGPT,GEMINI ETC.)
 
 A simple ChatGPT-style AI agent website with a clean and modern UI/UX, built using only HTML, CSS, and Python (Flask). This application integrates with free AI models like Google's Gemini, HuggingFace's models, and optionally OpenAI's API.
 
